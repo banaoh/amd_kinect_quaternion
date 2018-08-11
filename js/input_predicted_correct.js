@@ -18,7 +18,7 @@ var count = 0;
 var current_frame = 0;
 var end_frame = 0;
 
-var model_num = 6;
+var model_num = 1;
 
 var motion_data = new Array(model_num);
 var mesh = new Array(model_num);
@@ -83,7 +83,7 @@ scene.fog = new THREE.FogExp2(0xfff4e5, 0.00003);
 
 //camera
 webglcamera = new THREE.PerspectiveCamera(40, webglwidth / webglheight, 1, 12000);
-webglcamera.position.set(0, 10, 50);
+webglcamera.position.set(0, 10, 30);
 webglcamera.lookAt(new THREE.Vector3(0, 30, 0));
 
 
@@ -122,7 +122,6 @@ for (var i = 0; i < 3; i++) {
   scene.add(spotlight[i]);
 }
 
-
 // model rendering
 loader = new THREE.JSONLoader();
 loader.load("model/50s_politician4v2_noglow.js", function(geometry, mats) {
@@ -131,35 +130,16 @@ loader.load("model/50s_politician4v2_noglow.js", function(geometry, mats) {
 
   mats.forEach(function(mat) {
     mat.skinning = true;
-    //mat.morphTargets = true;
   });
 
   // (1) csvデータの読み込み
   // motion_data[0, 1, 2] ... [ original(kinect), predicted, correct(mocap) ]
   var filename = new Array(model_num);
-
-
-  // filename[0] = "../datas/outputs/kinect_17_formatted.csv";
-  // filename[1] = "../datas/predicted/X_test_test_kinect_17_norot12.csv";
-  // filename[0] = "../datas/converted_data/mocap_17_cut_converted.csv";
-
-  var motion = "squad";
-  var side = "back";
-  var window_size1 = "5";
-  var window_size2 = "9";
-  var window_size3 = "15";
-  // filename[0] = "../datas/raw_datas/experiment/dataset/predicts/ki_crossing_arms_back.csv";
-  // filename[1] = "../../../../Share";
-  // filename[0] = "../datas/raw_datas/experiment/dataset/predicts/ki_"+ motion +"_"+ side +".csv";
-  // filename[1] = "../datas/experiments/X_test_ki_"+ motion +"_"+ side +"_experiment_240.csv";
-
-  filename[0] = "../datas/raw_datas/experiment/dataset/predicts/ki_"+ motion +"_"+ side +".csv";
-  filename[1] = "../datas/experiments/X_test_ki_" + motion + "_" + side + "_experiment_normalized.csv";
-  filename[2] = "../datas/experiments/X_test_ki_" + motion + "_" + side + "_experiment_moving_averaged_using_tekeisan_qua_" + window_size1 + "contexts.csv";
-  filename[3] = "../datas/experiments/X_test_ki_" + motion + "_" + side + "_experiment_moving_averaged_using_tekeisan_qua_" + window_size2 + "contexts.csv";
-  filename[4] = "../datas/experiments/X_test_ki_" + motion + "_" + side + "_experiment_moving_averaged_using_tekeisan_qua_" + window_size3 + "contexts.csv";
-  filename[5] = "../datas/raw_datas/experiment/dataset/predicts/mo_"+ motion +"_"+ side +".csv";
-
+  var motion_num = "1";
+  var side_num   = "0";
+  filename[0] = "../datas/data/kinect_"   + motion_num + "_" + side_num +".csv";
+  filename[1] = "../datas/data/predicted_"+ motion_num + "_" + side_num +".csv";
+  filename[2] = "../datas/data/mocap_"    + motion_num + "_" + side_num +".csv";
 
   // (2) motionデータの読み込み
   for (var i = 0; i < motion_data.length; i++) {
@@ -183,15 +163,12 @@ loader.load("model/50s_politician4v2_noglow.js", function(geometry, mats) {
   // mesh[0, 1, 2] ... [ original(kinect), predicted, correct(mocap) ]
   for (var i = 0; i < mesh.length; i++) {
     mesh[i] = new THREE.SkinnedMesh(geometry, new THREE.MeshFaceMaterial(mats));
-    mesh[i].skeleton.bones[0].position.set(i*8-20, 0, 0);
+    mesh[i].skeleton.bones[0].position.set(i*8-((model_num-1)*4), 0, 0);
     // mesh[i].skeleton.bones[0].position.set(i*1-1, 0, 0);
     mesh[i].scale.set(1, 1, 1);
     mesh[i].castShadow = true;
     scene.add(mesh[i]);
   }
-
-
-  
   render();
 });
 
@@ -213,6 +190,7 @@ function load_csv(filename){
   }
   return csvData;
 }
+
 
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -357,20 +335,13 @@ function convert_kinect_to_three( quaternionArray, mesh ) {
   mesh.skeleton.bones[22].quaternion.copy( three_rotq3[22] );
   mesh.skeleton.bones[23].quaternion.copy( three_rotq3[23] );
   mesh.skeleton.bones[24].quaternion.copy( three_rotq3[24] );
-
-
 }
 
 
-
-
-
 // ===================================================================================
 // ===================================================================================
 // ===================================================================================
 // ===================================================================================
-
-
 
 
 // kinect -> three の変換メソッド
@@ -405,31 +376,16 @@ function render() {
   } else {
     current_frame=0;
   }
+  console.log( current_frame );
 
   
   var kinect_add_frame = 0;
   var mocap_add_frame = 0;
   var both_add_frame = 0;
-  
 
-  // 変換を確認用
-  // convert_kinect_to_three( motion_data[0][current_frame + kinect_add_frame + both_add_frame +10 ], mesh[0] );
-  // var q1 = new THREE.Quaternion( 0.707, 0, 0, 0.707);
-  // mesh[0].skeleton.bones[5].quaternion.copy(q1);
-
-  convert_kinect_to_three( motion_data[0][current_frame + kinect_add_frame + both_add_frame +10 ], mesh[0] );
-  convert_kinect_to_three( motion_data[1][current_frame + kinect_add_frame + both_add_frame  ], mesh[1] );
-  convert_kinect_to_three( motion_data[2][current_frame + kinect_add_frame + both_add_frame  ], mesh[2] );
-  convert_kinect_to_three( motion_data[3][current_frame + kinect_add_frame + both_add_frame  ], mesh[3] );
-  convert_kinect_to_three( motion_data[4][current_frame + kinect_add_frame + both_add_frame  ], mesh[4] );
-  convert_kinect_to_three( motion_data[5][current_frame + kinect_add_frame + both_add_frame +10 ], mesh[5] );
-  console.log( mesh[0] );
-
-  // convert_kinect_to_three( motion_data[0][ 2900 +10 ], mesh[0] );
-  // convert_kinect_to_three( motion_data[1][ 2900  ], mesh[1] );
-  // convert_kinect_to_three( motion_data[2][ 2900 +10 ], mesh[2] );
-
-console.log(current_frame);
+  convert_kinect_to_three( motion_data[0][current_frame], mesh[0] );
+  convert_kinect_to_three( motion_data[1][current_frame], mesh[1] );
+  convert_kinect_to_three( motion_data[2][current_frame], mesh[2] );
 
   requestAnimationFrame(render);
 
